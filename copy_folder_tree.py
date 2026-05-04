@@ -7,6 +7,12 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 
 
+def get_base_path():
+    """Lấy đường dẫn gốc của thư mục chứa ứng dụng, hỗ trợ cả khi chạy từ script và từ exe"""
+    if getattr(sys, 'frozen', False):
+        return sys._MEIPASS
+    return os.path.dirname(os.path.abspath(__file__))
+
 def copy_tree(src, dest, merge_existing, log_callback):
     """Copies source folder structure to destination folder without files
     and reports progress via log_callback.
@@ -45,6 +51,11 @@ def run_gui():
     root.title("Sao chép Cây Thư mục - v1.0.0 (04/05/2026) - TS. NGUYỄN HỒ BẮC")
     root.geometry("600x500")
     root.resizable(False, False)
+
+    try:
+        root.iconbitmap(os.path.join(get_base_path(), 'icon.ico'))
+    except Exception:
+        pass
 
     # Khung chứa cho Thư mục Nguồn
     frame_src = tk.Frame(root)
@@ -153,21 +164,26 @@ def run_gui():
     frame_buttons.pack(pady=10)
 
     def show_help():
-        # Khi đóng gói exe, pyinstaller sẽ giải nén vào thư mục tạm sys._MEIPASS
-        if getattr(sys, 'frozen', False):
-            base_path = sys._MEIPASS
-        else:
-            base_path = os.path.dirname(os.path.abspath(__file__))
-            
-        readme_path = os.path.join(base_path, 'README.md')
+        readme_path = os.path.join(get_base_path(), 'README.md')
         try:
             os.startfile(readme_path)
         except Exception as e:
             messagebox.showerror("Lỗi", f"Không thể mở file trợ giúp: {e}")
 
-    tk.Button(frame_buttons, text="Trợ giúp", command=show_help, width=10, height=2, bg='#17a2b8', fg='white', font=('Arial', 10, 'bold')).pack(side=tk.LEFT, padx=10)
-    tk.Button(frame_buttons, text="Thực hiện sao chép", command=start_copy, width=18, height=2, bg='#4CAF50', fg='white', font=('Arial', 10, 'bold')).pack(side=tk.LEFT, padx=10)
-    tk.Button(frame_buttons, text="Thoát", command=root.destroy, width=10, height=2, bg='#dc3545', fg='white', font=('Arial', 10, 'bold')).pack(side=tk.LEFT, padx=10)
+    def open_dest_folder():
+        dest = dest_var.get().strip()
+        if not dest or not os.path.exists(dest):
+            messagebox.showwarning("Cảnh báo", "Thư mục đích chưa được chọn hoặc không tồn tại!")
+            return
+        try:
+            os.startfile(dest)
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể mở thư mục đích: {e}")
+
+    tk.Button(frame_buttons, text="Trợ giúp", command=show_help, width=10, height=2, bg='#17a2b8', fg='white', font=('Arial', 10, 'bold')).pack(side=tk.LEFT, padx=5)
+    tk.Button(frame_buttons, text="Mở Đích", command=open_dest_folder, width=10, height=2, bg='#ffc107', fg='black', font=('Arial', 10, 'bold')).pack(side=tk.LEFT, padx=5)
+    tk.Button(frame_buttons, text="Thực hiện sao chép", command=start_copy, width=18, height=2, bg='#4CAF50', fg='white', font=('Arial', 10, 'bold')).pack(side=tk.LEFT, padx=5)
+    tk.Button(frame_buttons, text="Thoát", command=root.destroy, width=10, height=2, bg='#dc3545', fg='white', font=('Arial', 10, 'bold')).pack(side=tk.LEFT, padx=5)
 
     root.mainloop()
 
